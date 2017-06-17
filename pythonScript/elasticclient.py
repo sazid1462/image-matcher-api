@@ -15,9 +15,8 @@ import requests
 import time
 from multiprocessing.pool import ThreadPool
 import base64
+import sys
 # from sklearn.preprocessing import normalize
-
-st = time.time()
 
 def cosine_similarity(ratings):
     sim = ratings.dot(ratings.T)
@@ -32,14 +31,14 @@ def get_all_features_from_elastic():
      # changing datatype of features from float to short makes any impact.
 
      elasticResp = client.search(index = 'image-index', doc_type = 'image', body = {"_source" : ["id","features"]})
-     idAndFeatures = [doc for doc in elasticResp['hits']['hits']]
+     prevImageIdAndFeatures = [doc for doc in elasticResp['hits']['hits']]
      print('feature fetch time  '+ repr(time.time() - curMethodst ) )
-     return idAndFeatures
+     return prevImageIdAndFeatures
 
-def predict_received_image_features(x):
+def predict_received_image_features(imgArr):
      curMethodst = time.time()
      featurePredictor = VGG16(weights='imagenet', include_top=False, pooling = 'max')
-     featuresReceivedImage = featurePredictor.predict(x)
+     featuresReceivedImage = featurePredictor.predict(imgArr)
      print('modeling time  '+ repr(time.time() - curMethodst) )
      return featuresReceivedImage
 
@@ -54,13 +53,13 @@ def persist_raw_image_as_string_in_elastic(imagePath):
      print('Image Persisting time   '+ repr(time.time() - curMethodst ) )
      return 'asdad'
 
-def get_3_similar_images():
+def get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage):
      respModel1 = {'id':'BalaMar1', 'similarity':-100}
      respModel2 = {'id':'BalaMar2', 'similarity':-100}
      respModel3 = {'id':'BalaMar3', 'similarity':-100}
      respArray = [respModel1, respModel2, respModel3]
 
-     for x in idAndFeatures:
+     for x in prevImageIdAndFeatures:
           curId = x['_source']['id']
           curFeatures = x['_source']['features']
           combined = np.vstack((featuresReceivedImage, curFeatures))
@@ -76,48 +75,52 @@ def get_3_similar_images():
                break
      return [o['id'] for o in respArray]
 
+
 """
 GLOBAL SCOPE VARIABLES Start
 """
 pool = ThreadPool(processes=5)
 client = Elasticsearch([{'host': 'localhost', 'port':9200}])
-imagesize = 300
 idForReceivedImage = uuid.uuid4().hex
+img_path = 'F:/ABABAB/test_images/Car/image_22.png'
 """
 GLOBAL SCOPE VARIABLES End
 """
 
+def main():
+     st = time.time()
+     imagesize = 300
+     img = kimage.load_img(img_path, target_size=(imagesize, imagesize))
+     imgArr = kimage.img_to_array(img)
+     imgArr = np.expand_dims(imgArr, axis=0)
+     imgArr = preprocess_input(imgArr)
 
-img_path = 'test_images/Car/image_22.png'
-# Should get the image from API
-img = kimage.load_img(img_path, target_size=(imagesize, imagesize))
+     receivedImageName = 'image_22.png'
 
-x = kimage.img_to_array(img)
-x = np.expand_dims(x, axis=0)
-x = preprocess_input(x)
-
-receivedImageName = 'image_22.png'
-
-predict_assync = pool.apply_async(predict_received_image_features, args = (x,))
-index_assync = pool.apply_async(persist_raw_image_as_string_in_elastic, args = (img_path,))
-get_assync = pool.apply_async(get_all_features_from_elastic, args = ())
-
-
-idAndFeatures = get_assync.get()
-status = index_assync.get()
-featuresReceivedImage = predict_assync.get()
+     predict_assync = pool.apply_async(predict_received_image_features, args = (imgArr,))
+     index_assync = pool.apply_async(persist_raw_image_as_string_in_elastic, args = (img_path,))
+     get_assync = pool.apply_async(get_all_features_from_elastic, args = ())
 
 
-receivedImageFeatureModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : featuresReceivedImage.tolist()}
+     prevImageIdAndFeatures = get_assync.get()
+     status = index_assync.get()
+     featuresReceivedImage = predict_assync.get()
 
-smililarImageIds = get_3_similar_images()
-# Give Proper API URL
-apiURL = 'http://localhost'
-#result = requests.post(apiURL, data = {'id':[o['id'] for o in respArray]})
+     smililarImageIds = get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage)
+     receivedImageFeatureModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : featuresReceivedImage.tolist()}
+     #client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = receivedImageFeatureModel)
 
-#client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = receivedImageFeatureModel)
+     # Give Proper API URL
+     apiURL = 'http://localhost'
+     #result = requests.post(apiURL, data = {'id':smililarImageIds})
+     ed = time.time()
+     print('Total Time   '+ repr((ed- st)) )
 
-ed = time.time()
 
-print('Total Time   '+ repr((ed- st)) )
+if __name__ == "__main__":
+     global img_path
+     #img_path = sys.argv[1]
+     main()
 
+# TODO elastic exception handling
+# TODO get es creds from environment variable
