@@ -31,9 +31,7 @@ def get_all_features_from_elastic():
      # TODO :  once the skeletpn is complete come back here and find out if
      # changing datatype of features from float to short makes any impact.
 
-     elasticIndex = 'image-index'
-     doc_type = 'image'
-     elasticResp = client.search(index = elasticIndex, doc_type = doc_type, body = {"_source" : ["id","features"]})
+     elasticResp = client.search(index = 'image-index', doc_type = 'image', body = {"_source" : ["id","features"]})
      idAndFeatures = [doc for doc in elasticResp['hits']['hits']]
      print('feature fetch time  '+ repr(time.time() - curMethodst ) )
      return idAndFeatures
@@ -50,10 +48,8 @@ def persist_raw_image_as_string_in_elastic(imagePath):
      with open(imagePath, "rb") as imageFile:
           rawImage = base64.b64encode(imageFile.read())
 
-     elasticIndex = 'raw-image-index'
-     doc_type = 'raw-image'
      rawImageModel = {'id': idForReceivedImage, 'raw': str(rawImage)}
-     elasticResp = client.index(index = elasticIndex, doc_type = doc_type, id = idForReceivedImage, body = rawImageModel)
+     elasticResp = client.index(index = 'raw-image-index', doc_type = 'raw-image', id = idForReceivedImage, body = rawImageModel)
 
      print('Image Persisting time   '+ repr(time.time() - curMethodst ) )
      return 'asdad'
@@ -80,9 +76,18 @@ def get_3_similar_images():
                break
      return [o['id'] for o in respArray]
 
+"""
+GLOBAL SCOPE VARIABLES Start
+"""
 pool = ThreadPool(processes=5)
-
+client = Elasticsearch([{'host': 'localhost', 'port':9200}])
 imagesize = 300
+idForReceivedImage = uuid.uuid4().hex
+"""
+GLOBAL SCOPE VARIABLES End
+"""
+
+
 img_path = 'test_images/Car/image_22.png'
 # Should get the image from API
 img = kimage.load_img(img_path, target_size=(imagesize, imagesize))
@@ -91,36 +96,26 @@ x = kimage.img_to_array(img)
 x = np.expand_dims(x, axis=0)
 x = preprocess_input(x)
 
-
 receivedImageName = 'image_22.png'
-idForReceivedImage = uuid.uuid4().hex
 
-client = Elasticsearch([{'host': 'localhost', 'port':9200}])
-
+predict_assync = pool.apply_async(predict_received_image_features, args = (x,))
 index_assync = pool.apply_async(persist_raw_image_as_string_in_elastic, args = (img_path,))
 get_assync = pool.apply_async(get_all_features_from_elastic, args = ())
-predict_assync = pool.apply_async(predict_received_image_features, args = (x,))
 
 
 idAndFeatures = get_assync.get()
-featuresReceivedImage = predict_assync.get()
 status = index_assync.get()
+featuresReceivedImage = predict_assync.get()
 
 
-
-imageModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : featuresReceivedImage.tolist()}
+receivedImageFeatureModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : featuresReceivedImage.tolist()}
 
 smililarImageIds = get_3_similar_images()
-
-
-
 # Give Proper API URL
 apiURL = 'http://localhost'
 #result = requests.post(apiURL, data = {'id':[o['id'] for o in respArray]})
 
-#client.index(index = elasticIndex, doc_type = doc_type, id = idForReceivedImage, body = imageModel)
-
-# Find a proper way of saving actual images into elasticsearch
+#client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = receivedImageFeatureModel)
 
 ed = time.time()
 
