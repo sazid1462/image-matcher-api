@@ -79,11 +79,47 @@ def get_3_similar_images():
                respArray[idx]['similarity'] = sim[0][1]
                break
      return [o['id'] for o in respArray]
+ 
+    
+def get_3_similar_images_from_elastic(features):
+     curMethodst = time.time()
+
+     elasticIndex = 'image-index'
+     doc_type = 'image'
+     body = {
+       "_source": [
+          "id",
+          "features"
+       ],
+       "query": {
+          "function_score": {
+             "query": {
+                "match_all": {}
+             },
+             "functions": [{
+                 "script_score": {
+                    "script": {
+                        "lang": "groovy",
+                        "file": "cosine-similarity",
+                        "params": {
+                            "left_vector":features,
+                            "right_vector":"doc['features']"
+                        }
+                    }
+                 }
+             }]
+          }
+       }
+    }
+     elasticResp = client.search(index = elasticIndex, doc_type = doc_type, body = body)
+     idAndFeatures = [doc for doc in elasticResp['hits']['hits']]
+     print('feature fetch time  '+ repr(time.time() - curMethodst ) )
+     return idAndFeatures
 
 pool = ThreadPool(processes=5)
 
 imagesize = 300
-img_path = 'test_images/Car/image_22.png'
+img_path = 'test_images/image_20.png'
 # Should get the image from API
 img = kimage.load_img(img_path, target_size=(imagesize, imagesize))
 
@@ -92,7 +128,7 @@ x = np.expand_dims(x, axis=0)
 x = preprocess_input(x)
 
 
-receivedImageName = 'image_22.png'
+receivedImageName = 'image_20.png'
 idForReceivedImage = uuid.uuid4().hex
 
 client = Elasticsearch([{'host': 'localhost', 'port':9200}])
@@ -110,15 +146,19 @@ status = index_assync.get()
 
 imageModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : featuresReceivedImage.tolist()}
 
-smililarImageIds = get_3_similar_images()
 
+#smililarImageIds = get_3_similar_images()
+get_3_similar_async = pool.apply_async(get_3_similar_images_from_elastic, args = (imageModel['features'],))
 
+similarImages = get_3_similar_async.get()
+
+print(similarImages)
 
 # Give Proper API URL
 apiURL = 'http://localhost'
 #result = requests.post(apiURL, data = {'id':[o['id'] for o in respArray]})
 
-#client.index(index = elasticIndex, doc_type = doc_type, id = idForReceivedImage, body = imageModel)
+client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = imageModel)
 
 # Find a proper way of saving actual images into elasticsearch
 
