@@ -11,10 +11,9 @@ from keras.applications.vgg16 import VGG16
 from keras.preprocessing import image as kimage
 from keras.applications.vgg16 import preprocess_input
 import numpy as np
-import requests
-import time
 from multiprocessing.pool import ThreadPool
 import base64
+import os
 import sys
 # from sklearn.preprocessing import normalize
 
@@ -26,31 +25,21 @@ def cosine_similarity(ratings):
     return (sim / norms / norms.T)
 
 def get_all_features_from_elastic():
-     curMethodst = time.time()
-     # TODO :  once the skeletpn is complete come back here and find out if
-     # changing datatype of features from float to short makes any impact.
-
      elasticResp = client.search(index = 'image-index', doc_type = 'image', body = {"_source" : ["id","features"]})
      prevImageIdAndFeatures = [doc for doc in elasticResp['hits']['hits']]
-     print('feature fetch time  '+ repr(time.time() - curMethodst ) )
      return prevImageIdAndFeatures
 
 def predict_received_image_features(imgArr):
-     curMethodst = time.time()
      featurePredictor = VGG16(weights='imagenet', include_top=False, pooling = 'max')
      featuresReceivedImage = featurePredictor.predict(imgArr)
-     print('modeling time  '+ repr(time.time() - curMethodst) )
      return featuresReceivedImage
 
 def persist_raw_image_as_string_in_elastic(imagePath):
-     curMethodst = time.time()
      with open(imagePath, "rb") as imageFile:
           rawImage = base64.b64encode(imageFile.read())
 
      rawImageModel = {'id': idForReceivedImage, 'raw': str(rawImage)}
      elasticResp = client.index(index = 'raw-image-index', doc_type = 'raw-image', id = idForReceivedImage, body = rawImageModel)
-     print(elasticResp['created'])
-     print('Image Persisting time   '+ repr(time.time() - curMethodst ) )
      return 'asdad'
 
 def get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage):
@@ -70,9 +59,9 @@ def get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage):
                          respArray[i]['id'] = respArray[i-1]['id']
                          respArray[i]['similarity'] = respArray[i-1]['similarity']
 
-               respArray[idx]['id'] = curId
-               respArray[idx]['similarity'] = sim[0][1]
-               break
+                    respArray[idx]['id'] = curId
+                    respArray[idx]['similarity'] = sim[0][1]
+                    break
      return [o['id'] for o in respArray]
 
 
@@ -82,20 +71,20 @@ GLOBAL SCOPE VARIABLES Start
 pool = ThreadPool(processes=5)
 client = Elasticsearch([{'host': 'localhost', 'port':9200}])
 idForReceivedImage = uuid.uuid4().hex
-img_path = 'F:/ABABAB/test_images/Car/image_22.png'
+#img_path = 'F:/ABABAB/test_images/Car/image_22.png'
 """
 GLOBAL SCOPE VARIABLES End
 """
 
 def main():
-     st = time.time()
+
      imagesize = 300
      img = kimage.load_img(img_path, target_size=(imagesize, imagesize))
      imgArr = kimage.img_to_array(img)
      imgArr = np.expand_dims(imgArr, axis=0)
      imgArr = preprocess_input(imgArr)
 
-     receivedImageName = 'image_22.png'
+     receivedImageName = os.path.basename(img_path)
 
      predict_assync = pool.apply_async(predict_received_image_features, args = (imgArr,))
      index_assync = pool.apply_async(persist_raw_image_as_string_in_elastic, args = (img_path,))
@@ -108,18 +97,16 @@ def main():
 
      smililarImageIds = get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage)
      receivedImageFeatureModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : featuresReceivedImage.tolist()}
-     #client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = receivedImageFeatureModel)
+     client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = receivedImageFeatureModel)
 
-     # Give Proper API URL
-     apiURL = 'http://localhost'
-     #result = requests.post(apiURL, data = {'id':smililarImageIds})
-     ed = time.time()
-     print('Total Time   '+ repr((ed- st)) )
+     for ids in smililarImageIds:
+          print(ids)
 
 
 if __name__ == "__main__":
+
      global img_path
-     #img_path = sys.argv[1]
+     img_path = sys.argv[1]
      main()
 
 # TODO elastic exception handling
