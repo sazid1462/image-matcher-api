@@ -1,0 +1,33 @@
+PUT image-index
+{
+    "settings": {
+        "index": {
+            "number_of_replicas": 1,
+            "number_of_shards" : 1
+        }
+    }, 
+    "mappings" : {
+        "image" : {
+            "properties" : {
+                "id" : { "type" : "string" },
+                "name" : { "type": "string"},
+                "features" : {"type": "float"}
+            }
+        }
+    }
+}
+
+
+
+
+PUT raw-image-index
+{
+    "mappings" : {
+        "raw-image" : {
+            "properties" : {
+                "id" : { "type" : "string" },
+                "raw" : { "type": "binary"}
+            }
+        }
+    }
+}
