@@ -11,9 +11,9 @@ client = Elasticsearch()
 
 
 request_body = {
-	    "settings" : {
-	        "number_of_shards": 5,
-	        "number_of_replicas": 1
+	    'settings' : {
+	        'number_of_shards': 5,
+	        'number_of_replicas': 1
 	    },
 
 	    'mappings': {
@@ -30,16 +30,16 @@ request_body = {
 client.indices.create(index = 'image-index', body = request_body, ignore=400)
 
 request_body = {
-	    "settings" : {
-	        "number_of_shards": 5,
-	        "number_of_replicas": 1
+	    'settings' : {
+	        'number_of_shards': 5,
+	        'number_of_replicas': 1
 	    },
 
 	    'mappings': {
 	        'image': {
 	            'properties': {
 	                'id': {'index': 'not_analyzed', 'type': 'string'},
-	                'raw': {'index': 'not_analyzed', 'type': 'string'}
+	                'raw': {'index': 'not_analyzed', 'type': 'binary'}
 	            }
              }
           }
