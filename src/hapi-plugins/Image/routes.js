@@ -2,7 +2,7 @@ const Joi = require('joi');
 const fs = require('fs');
 const Path = require('path');
 const sys = require('sys');
-const exec = require('child_process').exec;
+const spawn = require('child_process').spawn;
 
 module.exports = [
   {
@@ -51,12 +51,26 @@ module.exports = [
             const ret = {
               filename: data.hapi.filename,
             };
-            exec('ls', (exErr, stdout, stderr) => {
-              sys.print(`stdout ${stdout}`);
-              sys.print(`stdin ${stderr}`);
-              if (exErr) {
-                console.log(`error ${exErr}`);
-              }
+            // exec('ls', (exErr, stdout, stderr) => {
+            //   sys.print(`stdout ${stdout}`);
+            //   sys.print(`stdin ${stderr}`);
+            //   if (exErr) {
+            //     console.log(`error ${exErr}`);
+            //   }
+            // });
+
+            const ps = spawn('python', ['/code/pythonScript/elasticclient.py', `/code/uploads/${name}`]);
+
+            ps.stdout.on('data', (res) => {
+              console.log(`stdout: ${res}`);
+            });
+
+            ps.stderr.on('data', (res) => {
+              console.log(`stderr: ${res}`);
+            });
+
+            ps.on('close', (res) => {
+              console.log(`child process exited with code ${res}`);
             });
             reply(JSON.stringify(ret));
           });

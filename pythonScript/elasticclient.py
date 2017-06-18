@@ -69,7 +69,7 @@ def get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage):
 GLOBAL SCOPE VARIABLES Start
 """
 pool = ThreadPool(processes=5)
-client = Elasticsearch([{'host': 'localhost', 'port':9200}])
+client = Elasticsearch([{'host': 'es', 'port':9200}])
 idForReceivedImage = uuid.uuid4().hex
 #img_path = 'F:/ABABAB/test_images/Car/image_22.png'
 """
