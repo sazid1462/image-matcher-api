@@ -79,9 +79,9 @@ def get_3_similar_images():
                respArray[idx]['similarity'] = sim[0][1]
                break
      return [o['id'] for o in respArray]
- 
-    
-def get_3_similar_images_from_elastic(features):
+
+
+def get_3_similar_images_from_elastic():
      curMethodst = time.time()
 
      elasticIndex = 'image-index'
@@ -91,7 +91,10 @@ def get_3_similar_images_from_elastic(features):
           "id",
           "features"
        ],
+       'from' : 0,
+          'size' : 3,
        "query": {
+
           "function_score": {
              "query": {
                 "match_all": {}
@@ -102,7 +105,7 @@ def get_3_similar_images_from_elastic(features):
                         "lang": "groovy",
                         "file": "cosine-similarity",
                         "params": {
-                            "left_vector":features,
+                            "left_vector":featuresReceivedImage.tolist(),
                             "right_vector":"doc['features']"
                         }
                     }
@@ -119,7 +122,7 @@ def get_3_similar_images_from_elastic(features):
 pool = ThreadPool(processes=5)
 
 imagesize = 300
-img_path = 'test_images/image_20.png'
+img_path = 'F:/ABABAB/test_images/Car/image_20.png'
 # Should get the image from API
 img = kimage.load_img(img_path, target_size=(imagesize, imagesize))
 
@@ -133,13 +136,17 @@ idForReceivedImage = uuid.uuid4().hex
 
 client = Elasticsearch([{'host': 'localhost', 'port':9200}])
 
-index_assync = pool.apply_async(persist_raw_image_as_string_in_elastic, args = (img_path,))
-get_assync = pool.apply_async(get_all_features_from_elastic, args = ())
+
 predict_assync = pool.apply_async(predict_received_image_features, args = (x,))
+featuresReceivedImage = predict_assync.get()
+
+index_assync = pool.apply_async(persist_raw_image_as_string_in_elastic, args = (img_path,))
+get_assync = pool.apply_async(get_3_similar_images_from_elastic, args = ())
+
 
 
 idAndFeatures = get_assync.get()
-featuresReceivedImage = predict_assync.get()
+
 status = index_assync.get()
 
 
@@ -148,17 +155,17 @@ imageModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : 
 
 
 #smililarImageIds = get_3_similar_images()
-get_3_similar_async = pool.apply_async(get_3_similar_images_from_elastic, args = (imageModel['features'],))
+#get_3_similar_async = pool.apply_async(get_3_similar_images_from_elastic, args = (imageModel['features'],))
 
-similarImages = get_3_similar_async.get()
+#similarImages = get_3_similar_async.get()
 
-print(similarImages)
+print(idAndFeatures)
 
 # Give Proper API URL
 apiURL = 'http://localhost'
 #result = requests.post(apiURL, data = {'id':[o['id'] for o in respArray]})
 
-client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = imageModel)
+#client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = imageModel)
 
 # Find a proper way of saving actual images into elasticsearch
 
