@@ -49,7 +49,7 @@ def persist_raw_image_as_string_in_elastic(imagePath):
 
      rawImageModel = {'id': idForReceivedImage, 'raw': str(rawImage)}
      elasticResp = client.index(index = 'raw-image-index', doc_type = 'raw-image', id = idForReceivedImage, body = rawImageModel)
-
+     print(elasticResp['created'])
      print('Image Persisting time   '+ repr(time.time() - curMethodst ) )
      return 'asdad'
 
