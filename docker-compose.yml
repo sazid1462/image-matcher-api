@@ -1,5 +1,9 @@
 version: '2'
 services:
+  elastic:
+    image: "elasticsearch:latest"
+    ports: 
+      - 9200:9200
   web:
     build: .
     ports: 
@@ -8,5 +12,3 @@ services:
       - .:/code
     links:
       - "elastic:es"
-  elastic:
-    image: "elasticsearch:latest"

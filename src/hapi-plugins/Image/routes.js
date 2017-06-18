@@ -1,6 +1,8 @@
 const Joi = require('joi');
 const fs = require('fs');
 const Path = require('path');
+const sys = require('sys');
+const exec = require('child_process').exec;
 
 module.exports = [
   {
@@ -49,6 +51,13 @@ module.exports = [
             const ret = {
               filename: data.hapi.filename,
             };
+            exec('ls', (exErr, stdout, stderr) => {
+              sys.print(`stdout ${stdout}`);
+              sys.print(`stdin ${stderr}`);
+              if (exErr) {
+                console.log(`error ${exErr}`);
+              }
+            });
             reply(JSON.stringify(ret));
           });
         } else {
