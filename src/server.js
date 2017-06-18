@@ -5,7 +5,6 @@ const hapiPlugins = require('./swaggerGenerator');
 
 const server = new Hapi.Server();
 server.connection({
-  host: 'localhost',
   port: 4000,
 });
 
