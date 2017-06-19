@@ -25,7 +25,7 @@ def cosine_similarity(ratings):
     return (sim / norms / norms.T)
 
 def get_all_features_from_elastic():
-     elasticResp = client.search(index = 'image-index', doc_type = 'image', body = {"_source" : ["id","features"]})
+     elasticResp = client.search(index = 'feature-index', doc_type = 'feature', body = {"_source" : ["id","features"]})
      prevImageIdAndFeatures = [doc for doc in elasticResp['hits']['hits']]
      return prevImageIdAndFeatures
 
@@ -39,23 +39,23 @@ def persist_raw_image_as_string_in_elastic(imagePath):
           rawImage = base64.b64encode(imageFile.read())
 
      rawImageModel = {'id': idForReceivedImage, 'raw': str(rawImage)}
-     elasticResp = client.index(index = 'raw-image-index', doc_type = 'raw-image', id = idForReceivedImage, body = rawImageModel)
+     elasticResp = client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = rawImageModel)
      return 'asdad'
 
 def get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage):
-     respModel1 = {'id':'BalaMar1', 'similarity':-100}
-     respModel2 = {'id':'BalaMar2', 'similarity':-100}
-     respModel3 = {'id':'BalaMar3', 'similarity':-100}
-     respArray = [respModel1, respModel2, respModel3]
+     respArray = []
+
+     for ind in range(N):
+          respArray.append({'id':'BalaMar'+repr(ind), 'similarity':-100})
 
      for x in prevImageIdAndFeatures:
           curId = x['_source']['id']
           curFeatures = x['_source']['features']
           combined = np.vstack((featuresReceivedImage, curFeatures))
           sim = cosine_similarity(combined)
-          for idx in range(3):
+          for idx in range(N):
                if respArray[idx]['similarity'] < sim[0][1]:
-                    for i in range(2, idx, -1):
+                    for i in range(N-1, idx, -1):
                          respArray[i]['id'] = respArray[i-1]['id']
                          respArray[i]['similarity'] = respArray[i-1]['similarity']
 
@@ -75,6 +75,16 @@ idForReceivedImage = uuid.uuid4().hex
 """
 GLOBAL SCOPE VARIABLES End
 """
+
+def check_and_init_elastic():
+     if client.indices.exists(index = 'feature-index') == False:
+          import initElasticSearch
+          initElasticSearch.init_feature_index('localhost',9200)
+
+     if client.indices.exists(index = 'image-index') == False:
+          import initElasticSearch
+          initElasticSearch.init_image_index('localhost',9200)
+
 
 def main():
 
@@ -97,7 +107,7 @@ def main():
 
      smililarImageIds = get_3_similar_images(prevImageIdAndFeatures,featuresReceivedImage)
      receivedImageFeatureModel = {'id': idForReceivedImage, 'name' : receivedImageName,'features' : featuresReceivedImage.tolist()}
-     client.index(index = 'image-index', doc_type = 'image', id = idForReceivedImage, body = receivedImageFeatureModel)
+     client.index(index = 'feature-index', doc_type = 'feature', id = idForReceivedImage, body = receivedImageFeatureModel)
 
      for ids in smililarImageIds:
           print(ids)
@@ -107,6 +117,12 @@ if __name__ == "__main__":
 
      global img_path
      img_path = sys.argv[1]
+     if len(sys.argv) > 2 :
+         N = int(sys.argv[2])
+     else:
+         N = 3
+
+     check_and_init_elastic()
      main()
 
 # TODO elastic exception handling
