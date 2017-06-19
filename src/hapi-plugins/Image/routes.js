@@ -80,4 +80,22 @@ module.exports = [
       },
     },
   },
+  {
+    method: 'GET',
+    path: '/image/{uuid}',
+    config: {
+      tags: ['api'],
+      description: 'Get an Image',
+      handler: (request, reply) => {
+        reply({ status: 'OK' });
+      },
+    },
+  },
+  // {
+  //   method: 'GET',
+  //   path: '/yourpath',
+  //   handler: (request, reply) => {
+  //     reply(null, something().pipe());
+  //   },
+  // },
 ];

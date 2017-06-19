@@ -2,11 +2,11 @@ version: '2'
 services:
   elastic:
     image: "elasticsearch:latest"
-    ports: 
+    ports:
       - 9200:9200
   web:
     build: .
-    ports: 
+    ports:
       - 4000:4000
     volumes:
       - .:/code

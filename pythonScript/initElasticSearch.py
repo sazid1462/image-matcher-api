@@ -7,7 +7,7 @@ Created on Sun Jun 18 19:19:58 2017
 
 from elasticsearch import Elasticsearch
 
-client = Elasticsearch()
+client = Elasticsearch([{'host': 'es', 'port':9200}]);
 
 
 request_body = {

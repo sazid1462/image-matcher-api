@@ -13,4 +13,6 @@ RUN pip install keras
 RUN pip install tensorflow
 RUN pip install elasticsearch
 RUN pip install pillow
+RUN pip install h5py
+RUN python pythonScript/load_vgg16.py
 CMD ["npm", "run", "dev"]
