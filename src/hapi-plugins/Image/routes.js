@@ -1,7 +1,6 @@
 const Joi = require('joi');
 const fs = require('fs');
 const Path = require('path');
-const sys = require('sys');
 const spawn = require('child_process').spawn;
 
 module.exports = [
@@ -48,9 +47,6 @@ module.exports = [
             if (err) {
               throw err;
             }
-            const ret = {
-              filename: data.hapi.filename,
-            };
             // exec('ls', (exErr, stdout, stderr) => {
             //   sys.print(`stdout ${stdout}`);
             //   sys.print(`stdin ${stderr}`);
@@ -60,22 +56,23 @@ module.exports = [
             // });
 
             const ps = spawn('python', ['/code/pythonScript/elasticclient.py', `/code/uploads/${name}`]);
-
+            let chunk = '';
             ps.stdout.on('data', (res) => {
-              console.log(`stdout: ${res}`);
+              // console.log(`stdout: ${res}`);
+              chunk += res;
             });
 
-            ps.stderr.on('data', (res) => {
-              console.log(`stderr: ${res}`);
-            });
+            // ps.stderr.on('data', (res) => {
+            //   console.log(`stderr: ${res}`);
+            // });
 
             ps.on('close', (res) => {
               console.log(`child process exited with code ${res}`);
+              reply(JSON.stringify(chunk.trim().split('\n')));
             });
-            reply(JSON.stringify(ret));
           });
         } else {
-          console.log('fuck');
+          console.log('...');
         }
       },
     },
@@ -86,8 +83,21 @@ module.exports = [
     config: {
       tags: ['api'],
       description: 'Get an Image',
+      validate: {
+        params: {
+          uuid: Joi.string().required().description('uuid of image'),
+        },
+      },
       handler: (request, reply) => {
-        reply({ status: 'OK' });
+        const ps = spawn('python', ['/code/pythonScript/getRawImage.py', request.params.uuid]);
+        let chunk = '';
+        ps.stdout.on('data', (res) => {
+          chunk += res;
+        });
+        ps.on('close', (res) => {
+          console.log(`child process exited with code ${res}`);
+          reply(null, chunk);
+        });
       },
     },
   },

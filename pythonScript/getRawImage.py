@@ -10,7 +10,7 @@ import sys
 
 
 def getRawImage(rawImageId):
-     client = Elasticsearch([{'host': 'localhost', 'port':9200}])
+     client = Elasticsearch([{'host': 'es', 'port':9200}])
 
      searchBody = {
           '_source' : ['raw'],
