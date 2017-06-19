@@ -1,0 +1,18 @@
+<h1>Search</h1>
+<div>
+    <input ng-model="photo"
+           onchange="angular.element(this).scope().onPhotoChange(this.files)"
+           type="file" accept="image/*" />
+    <ul>
+        <li ng-repeat="photo in selectedPhotos"><img ng-src="{{photo}}" width="200" alt="Red dot"/></li>
+    </ul>
+    <button ng-click="uploadFile()">Upload</button>
+</div>
+<div>
+    {{message}}
+</div>
+<div>
+    <ul>
+        <li ng-repeat="photo in retrievedPhotos"><img ng-src="{{photo}}" width="200" alt="Red dot"/></li>
+    </ul>
+</div>
