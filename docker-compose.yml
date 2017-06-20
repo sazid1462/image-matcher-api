@@ -2,13 +2,13 @@ version: '2'
 services:
   elastic:
     image: "elasticsearch:latest"
+    volumes:
+      - ./data:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
   web:
     build: server
     ports:
       - 4000:4000
-    volumes:
-      - ./server:/code
     links:
       - "elastic:es"

@@ -20,7 +20,7 @@ def getRawImage(rawImageId):
                }
           }
      }
-     rawImage = client.search(index = 'raw-image-index', doc_type = 'raw-image', body = searchBody)
+     rawImage = client.search(index = 'image-index', doc_type = 'raw-image', body = searchBody)
      xxx =  rawImage['hits']['hits'][0]['_source']['raw']
      print(xxx)
 

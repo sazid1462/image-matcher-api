@@ -79,11 +79,11 @@ GLOBAL SCOPE VARIABLES End
 def check_and_init_elastic():
      if client.indices.exists(index = 'feature-index') == False:
           import initElasticSearch
-          initElasticSearch.init_feature_index('localhost',9200)
+          initElasticSearch.init_feature_index('es',9200)
 
      if client.indices.exists(index = 'image-index') == False:
           import initElasticSearch
-          initElasticSearch.init_image_index('localhost',9200)
+          initElasticSearch.init_image_index('es',9200)
 
 
 def main():
