@@ -5,10 +5,10 @@ services:
     ports:
       - 9200:9200
   web:
-    build: .
+    build: server
     ports:
       - 4000:4000
     volumes:
-      - .:/code
+      - ./server:/code
     links:
       - "elastic:es"
