@@ -2,14 +2,12 @@ version: '2'
 services:
   elastic:
     image: "elasticsearch:latest"
-    volumes:
-      - ./data:/usr/share/elasticsearch/data
     ports:
       - 9200:9200
+    environment:
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
   web:
     build: server
-    volumes:
-      - ./server:/code
     ports:
       - 4000:4000
     links:

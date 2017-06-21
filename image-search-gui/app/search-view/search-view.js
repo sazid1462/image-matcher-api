@@ -39,7 +39,9 @@ angular.module('myApp.searchView', ['ngRoute'])
                 $scope.$evalAsync(function () {
                     $scope.message = "Uploaded successfully";
                 });
-                $scope.retrieveFiles(data)
+                data.forEach((id)=>{
+                    $scope.retrieveFiles(id);
+                });
             })
             .error(function (data, status) {
                 $scope.$evalAsync(function () {
@@ -51,18 +53,9 @@ angular.module('myApp.searchView', ['ngRoute'])
             $scope.retrievedPhotos = [];
             $http({
                 method : "GET",
-                url : "http://localhost:4000/getImage?imageid="+data.filename
+                url : "http://localhost:4000/image/"+data
             }).then(function mySuccess(response) {
-                let reader = new FileReader();
-
-                reader.onload = function (e) {
-                    $scope.$evalAsync(function () {
-                        $scope.retrievedPhotos.push(e.target.result);
-                    });
-                };
-
-                reader.readAsDataURL(photo);
-
+                $scope.retrievedPhotos.push("data:image/png;base64, "+response.data);
             }, function myError(response) {
                 $scope.$evalAsync(function () {
                     $scope.message = "Failed! "+response.statusText;
