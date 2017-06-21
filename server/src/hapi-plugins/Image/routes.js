@@ -62,9 +62,9 @@ module.exports = [
               chunk += res;
             });
 
-            // ps.stderr.on('data', (res) => {
-            //   console.log(`stderr: ${res}`);
-            // });
+            ps.stderr.on('data', (res) => {
+              console.log(`stderr: ${res}`);
+            });
 
             ps.on('close', (res) => {
               console.log(`child process exited with code ${res}`);

@@ -8,6 +8,8 @@ services:
       - 9200:9200
   web:
     build: server
+    volumes:
+      - ./server:/code
     ports:
       - 4000:4000
     links:
