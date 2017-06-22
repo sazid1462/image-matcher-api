@@ -4,7 +4,7 @@
   * docker-compose (>=1.11.2)
 
 # How to build
-  * run `chmod +x fileName` on `build.sh` and 'up.sh' file.
+  * run `chmod +x fileName` on `build.sh` and `up.sh` file.
   * run `build.sh`
   * run `up.sh`
   * access localhost:8000 in browser
