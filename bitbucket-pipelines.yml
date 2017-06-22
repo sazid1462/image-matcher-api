@@ -13,5 +13,5 @@ pipelines:
           - npm install
           - npm run lint
           - cd ../image-search-gui
-          - npm prestart
-          - bower postinstall
+          - npm run prestart
+          - bower run postinstall
