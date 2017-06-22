@@ -1,18 +1,29 @@
-<h1>Search</h1>
+<h1 style="display: block; margin: 20px;">Search Similar Image</h1>
 <div>
     <input ng-model="photo"
            onchange="angular.element(this).scope().onPhotoChange(this.files)"
-           type="file" accept="image/*" />
-    <ul>
-        <li ng-repeat="photo in selectedPhotos"><img ng-src="{{photo}}" width="200" alt="Red dot"/></li>
-    </ul>
-    <button ng-click="uploadFile()">Upload</button>
+           type="file" accept="image/*" style="display: block; margin-left: 20px;">
+    <img id="imgPreview" src="#" width="200" alt="No Image Selected" style="margin-left: 20px;margin-top: 10px"/>
+    <button ng-click="uploadFile()" style="display: block; margin-left: 20px; margin-top: 5px">Upload</button>
 </div>
-<div>
+<em style="margin-left: 20px; margin-top: 5px; font-size: 10pt;">
     {{message}}
+</em>
+
+<h2 style="margin-left: 20px; margin-top: 5px;">
+    Similar Images
+</h2>
+
+<div style="display: block;width: 100%;height: 100%;" ng-if="isBusy">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif" alt="Be patient...">
 </div>
+
 <div>
-    <ul>
-        <li ng-repeat="photo in retrievedPhotos"><img ng-src="{{photo}}" width="200" alt="Red dot"/></li>
-    </ul>
+    <div class="gallery" ng-repeat="photo in retrievedPhotos track by $index">
+        <img ng-src="{{photo}}" width="200" alt="No Image Available">
+        <div class="desc">Image {{$index}}</div>
+    </div>
+    <!--<ul style="margin-left: 20px; list-style-type: none;">-->
+        <!--<li ng-repeat="photo in retrievedPhotos track by $index" style="float:left; margin: 5px;"><img ng-src="{{photo}}" width="200" alt="No Image Available"/></li>-->
+    <!--</ul>-->
 </div>
