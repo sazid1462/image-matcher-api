@@ -1,5 +1,5 @@
 let Config = {
-    ApiBaseUrl:'http://localhost:4000'
+    ApiBaseUrl:'http://app-api:4000'
 };
 
 'use strict';

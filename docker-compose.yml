@@ -6,9 +6,17 @@ services:
       - 9200:9200
     environment:
       ES_JAVA_OPTS: -Xms512m -Xmx512m
-  web:
+    volumes:
+      - /data:/user/share/elasticsearch/data
+  server:
     build: server
     ports:
       - 4000:4000
     links:
       - "elastic:es"
+  web:
+    build: image-search-gui
+    ports:
+      - 8000:8000
+    links:
+      - "server:app-api"
